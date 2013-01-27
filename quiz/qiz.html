@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<!--begin head of match-->
+        <style type="text/css">
+	/* DEMO CSS */
+	body{
+		width:100%;
+		margin:0px;
+		padding:0px;
+		font-family: Trebuchet MS, Lucida Sans Unicode, Arial, sans-serif;	/* Font to use */
+		background-color:#E2EBED;
+	}
+	#heading{
+		height:161px;
+	}
+	
+	/* END DEMO CSS */
+	
+	#dragScriptContainer{	/* BIG DIV containing HTML needed for the entire script */
+		width:550px;
+		margin:0 auto;
+		border:1px solid #000;
+		height:150px;
+		margin-top:20px;
+		padding:3px;
+		-moz-user-select:no;
+		overflow:hidden;
+		background-color:#FFF;
+		
+	}
+	h1{
+		margin:5px;
+		
+	}
+	#questionDiv{	/* Big div for all the questions */
+		float:left;
+		height:100%;
+		width:300px;
+
+		padding:2px;
+		
+		visibility:hidden;	/* Initial state  - Don't change this */
+	}
+	#answerDiv{	/* Big div for all the answers */
+		float:right;
+		height:400px;
+		width:150px;
+		border:1px solid #FFF;
+		padding:2px;	
+		
+		visibility:hidden; /* Initial state  - Don't change this */
+	}
+	
+	#questionDiv div,#answerDiv div,#dragContent div{	/* General rules for small divs - i.e. specific questions and answers */
+		width:145px;
+		height:20px;
+		line-height:20px;		
+		float:left;
+		margin-right:2px;
+		margin-bottom:2px;
+		text-align:center;
+		
+	}
+	
+	#dragContent div{	/* Drag content div - i.e. specific answers when they are beeing dragged */
+		border:1px solid #000;
+	}
+	
+	#answerDiv .dragDropSmallBox{	/* Small answer divs */
+		border:1px solid #000;
+		cursor:pointer;
+	}
+	
+	#questionDiv .dragDropSmallBox{	/* Small answer divs */
+		border:1px solid #000;
+		cursor:pointer;
+		background-color:#E2EBED;
+	}
+	
+	#questionDiv div div{	/* DIV after it has been dragged from right to left box */
+		margin:0px;
+		border:0px;
+		padding:0px;
+		background-color:#FFF;
+		cursor:pointer;
+	}
+	#questionDiv .destinationBox{	/* Small empty boxes for the questions - i.e. where answers could be dragged */
+		border:0px;
+		background-color:#DDD;
+		width:147px;	/* Width of #questionDiv div + 2 */
+		height:22px;
+		
+	
+		
+	}
+	#questionDiv .correctAnswer{	/* CSS indicating correct answer */
+		background-color:green;
+		color:#fff;
+		border:1px solid #000;
+	}
+	#questionDiv .wrongAnswer{	/* CSS indicating wrong answer */
+		background-color:red;
+		color:#fff;
+		border:1px solid #000;
+	}
+
+	#dragContent div{
+		background-color:#FFF;
+	}
+
+	#questionDiv .dragContentOver{	/* Mouse over question boxes - i.e. indicating where dragged element will be appended if mouse button is relased */
+		border:1px solid #F00;
+	}
+	
+	#answerDiv.dragContentOver{	/* Mouse over answer box - i.e. indicating where dragged element will be appended if mouse button is relased */
+		border:1px solid #F00;
+	}
+	
+	/* NEVER CHANGE THIS */
+	#dragContent{
+		position:absolute;
+		display:none;
+	}	
+	p{
+		margin:2px;
+		font-size:0.9em;
+	}
+	
+	</style>
+	<script type="text/javascript">
+
+	/************************************************************************************************************
+	(C) www.dhtmlgoodies.com, November 2005
+	
+	This is a script from www.dhtmlgoodies.com. You will find this and a lot of other scripts at our website.	
+	
+	Terms of use:
+	You are free to use this script as long as the copyright message is kept intact. However, you may not
+	redistribute, sell or repost it without our permission.
+	
+	Thank you!
+	
+	www.dhtmlgoodies.com
+	Alf Magne Kalleland
+	
+	************************************************************************************************************/
+		
+	var shuffleQuestions = true;	/* Shuffle questions ? */
+	var shuffleAnswers = true;	/* Shuffle answers ? */
+	var lockedAfterDrag = false;	/* Lock items after they have been dragged, i.e. the user get's only one shot for the correct answer */
+	
+	function quizIsFinished()
+	{
+		alert("Great job!  Because so many Americans get their health insurance through their employer or a family member's employer, America is often said to have an employment-based health insurance system.");		
+		
+	}
+	
+	
+	/* Don't change anything below here */
+	var dragContentDiv = false;
+	var dragContent = false;
+	
+	var dragSource = false;
+	var dragDropTimer = -1;
+	var destinationObjArray = new Array();
+	var destination = false;
+	var dragSourceParent = false;
+	var dragSourceNextSibling = false;
+	var answerDiv;
+	var questionDiv;	
+	var sourceObjectArray = new Array();
+	var arrayOfEmptyBoxes = new Array();
+	var arrayOfAnswers = new Array();
+	
+	function getTopPos(inputObj)
+	{		
+	  if(!inputObj || !inputObj.offsetTop)return 0;		
+	  var returnValue = inputObj.offsetTop;
+	  while((inputObj = inputObj.offsetParent) != null)returnValue += inputObj.offsetTop;
+	  return returnValue;
+	}
+	
+	function getLeftPos(inputObj)
+	{
+	  if(!inputObj || !inputObj.offsetLeft)return 0;	
+	  var returnValue = inputObj.offsetLeft;
+	  while((inputObj = inputObj.offsetParent) != null)returnValue += inputObj.offsetLeft;
+	  return returnValue;
+	}
+		
+	function cancelEvent()
+	{
+		return false;
+	}
+	
+	function initDragDrop(e)
+	{
+		if(document.all)e = event;
+		if(lockedAfterDrag && this.parentNode.parentNode.id=='questionDiv')return;
+		dragContentDiv.style.left = e.clientX  + Math.max(document.documentElement.scrollLeft,document.body.scrollLeft) + 'px';
+		dragContentDiv.style.top = e.clientY  + Math.max(document.documentElement.scrollTop,document.body.scrollTop) + 'px';
+		dragSource = this;
+		dragSourceParent = this.parentNode;
+		dragSourceNextSibling = false;
+		if(this.nextSibling)dragSourceNextSibling = this.nextSibling;
+		if(!dragSourceNextSibling.tagName)dragSourceNextSibling = dragSourceNextSibling.nextSibling;
+		
+		dragDropTimer=0;
+		timeoutBeforeDrag();
+		
+		return false;
+	}
+	
+	function timeoutBeforeDrag(){
+		if(dragDropTimer>=0 && dragDropTimer<10){
+			dragDropTimer = dragDropTimer +1;
+			setTimeout('timeoutBeforeDrag()',10);
+			return;
+		}
+		if(dragDropTimer>=10){
+			dragContentDiv.style.display='block';
+			dragContentDiv.innerHTML = '';
+			dragContentDiv.appendChild(dragSource);
+		
+			
+		}		
+	}
+	
+	function dragDropMove(e)
+	{
+		if(dragDropTimer<10){
+			return;
+		}
+		
+		if(document.all)e = event;
+		
+		var scrollTop = Math.max(document.documentElement.scrollTop,document.body.scrollTop);
+		var scrollLeft = Math.max(document.documentElement.scrollLeft,document.body.scrollLeft);
+		
+		dragContentDiv.style.left = e.clientX + scrollLeft + 'px';
+		dragContentDiv.style.top = e.clientY + scrollTop + 'px';
+		
+		var dragWidth = dragSource.offsetWidth;
+		var dragHeight = dragSource.offsetHeight;
+		
+
+		var objFound = false;
+		
+		var mouseX = e.clientX + scrollLeft;
+		var mouseY = e.clientY + scrollTop;
+		
+		destination = false;
+		for(var no=0;no<destinationObjArray.length;no++){
+			var left = destinationObjArray[no]['left'];
+			var top = destinationObjArray[no]['top'];
+			var width = destinationObjArray[no]['width'];
+			var height = destinationObjArray[no]['height'];
+			
+			destinationObjArray[no]['obj'].className = 'destinationBox';
+			var subs = destinationObjArray[no]['obj'].getElementsByTagName('DIV');
+			if(!objFound && subs.length==0){
+				if(mouseX < (left/1 + width/1) && (mouseX + dragWidth/1) >left && mouseY < (top/1 + height/1) && (mouseY + dragHeight/1) >top){
+					destinationObjArray[no]['obj'].className='dragContentOver';
+					destination = destinationObjArray[no]['obj'];					
+					objFound = true;
+				}		
+			}	
+		}
+		
+		sourceObjectArray['obj'].className='';
+		
+		if(!objFound){
+			var left = sourceObjectArray['left'];
+			var top = sourceObjectArray['top'];
+			var width = sourceObjectArray['width'];
+			var height = sourceObjectArray['height'];
+						
+			if(mouseX < (left/1 + width/1) && (mouseX + dragWidth/1) >left && mouseY < (top/1 + height/1) && (mouseY + dragHeight/1) >top){
+				destination = sourceObjectArray['obj'];
+				sourceObjectArray['obj'].className='dragContentOver';
+			}
+		}
+		return false;
+	}
+	
+	
+	function dragDropEnd()
+	{
+		if(dragDropTimer<10){
+			dragDropTimer = -1;
+			return;
+		}
+		dragContentDiv.style.display='none';
+		sourceObjectArray['obj'].style.backgroundColor = '#FFF';
+		if(destination){
+			destination.appendChild(dragSource);
+			destination.className='destinationBox';
+			
+			// Check if position is correct, i.e. correct answer to the question
+			
+			if(!destination.id || destination.id!='answerDiv'){
+				var previousEl = dragSource.parentNode.previousSibling;
+				if(!previousEl.tagName)previousEl = previousEl.previousSibling;
+				var numericId = previousEl.id.replace(/[^0-9]/g,'');
+				var numericIdSource = dragSource.id.replace(/[^0-9]/g,'');
+				
+				if(numericId==numericIdSource){
+					dragSource.className='correctAnswer';
+					checkAllAnswers();	
+				}
+				else
+					dragSource.className='wrongAnswer';				
+			}
+			
+			if(destination.id && destination.id=='answerDiv'){
+				dragSource.className='dragDropSmallBox';
+			}
+			
+		}else{
+			if(dragSourceNextSibling)
+				dragSourceNextSibling.parentNode.insertBefore(dragSource,dragSourceNextSibling);
+			else
+				dragSourceParent.appendChild(dragSource);
+		}
+		dragDropTimer = -1;
+		dragSourceNextSibling = false;
+		dragSourceParent = false;
+		destination = false;
+	}
+	
+	function checkAllAnswers()
+	{	
+		for(var no=0;no<arrayOfEmptyBoxes.length;no++){
+			var sub = arrayOfEmptyBoxes[no].getElementsByTagName('DIV');
+			if(sub.length==0)return;
+			
+			if(sub[0].className!='correctAnswer'){
+				return;
+			}	
+			
+		}	
+		
+		quizIsFinished();	
+	}
+	
+
+	
+	function resetPositions()
+	{
+		if(dragDropTimer>=10)return;
+		
+		for(var no=0;no<destinationObjArray.length;no++){
+			if(destinationObjArray[no]['obj']){
+				destinationObjArray[no]['left'] = getLeftPos(destinationObjArray[no]['obj'])
+				destinationObjArray[no]['top'] = getTopPos(destinationObjArray[no]['obj'])	
+			}		
+			
+		}
+		sourceObjectArray['left'] = getLeftPos(answerDiv);
+		sourceObjectArray['top'] = getTopPos(answerDiv);		
+	}
+	
+	
+	function initDragDropScript()
+	{
+		dragContentDiv = document.getElementById('dragContent');
+		
+		answerDiv = document.getElementById('answerDiv');
+		answerDiv.onselectstart = cancelEvent;
+		var divs = answerDiv.getElementsByTagName('DIV');
+		var answers = new Array();
+		
+		for(var no=0;no<divs.length;no++){
+			if(divs[no].className=='dragDropSmallBox'){
+				divs[no].onmousedown = initDragDrop;
+				answers[answers.length] = divs[no];
+				arrayOfAnswers[arrayOfAnswers.length] = divs[no];
+			}
+			
+		}	
+		
+		if(shuffleAnswers){
+			for(var no=0;no<(answers.length*10);no++){
+				var randomIndex = Math.floor(Math.random() * answers.length);
+				answerDiv.appendChild(answers[randomIndex]);
+			}		
+		}
+		
+		sourceObjectArray['obj'] = answerDiv;
+		sourceObjectArray['left'] = getLeftPos(answerDiv);
+		sourceObjectArray['top'] = getTopPos(answerDiv);
+		sourceObjectArray['width'] = answerDiv.offsetWidth;
+		sourceObjectArray['height'] = answerDiv.offsetHeight;
+		
+		
+		questionDiv = document.getElementById('questionDiv');
+		
+		questionDiv.onselectstart = cancelEvent;
+		var divs = questionDiv.getElementsByTagName('DIV');
+		
+		var questions = new Array();
+		var questionsOpenBoxes = new Array();
+		
+
+		for(var no=0;no<divs.length;no++){
+			if(divs[no].className=='destinationBox'){
+				var index = destinationObjArray.length;
+				destinationObjArray[index] = new Array();
+				destinationObjArray[index]['obj'] = divs[no];
+				destinationObjArray[index]['left'] = getLeftPos(divs[no])
+				destinationObjArray[index]['top'] = getTopPos(divs[no])
+				destinationObjArray[index]['width'] = divs[no].offsetWidth;
+				destinationObjArray[index]['height'] = divs[no].offsetHeight;
+				questionsOpenBoxes[questionsOpenBoxes.length] = divs[no];
+				arrayOfEmptyBoxes[arrayOfEmptyBoxes.length] = divs[no];
+			}
+			if(divs[no].className=='dragDropSmallBox'){
+				questions[questions.length] = divs[no];
+			}
+				
+		}
+		
+		if(shuffleQuestions){
+			for(var no=0;no<(questions.length*10);no++){
+				var randomIndex = Math.floor(Math.random() * questions.length);
+
+				questionDiv.appendChild(questions[randomIndex]);			
+				questionDiv.appendChild(questionsOpenBoxes[randomIndex]);		
+				
+				destinationObjArray[destinationObjArray.length] = destinationObjArray[randomIndex];
+				destinationObjArray.splice(randomIndex,1);	
+				
+				questionsOpenBoxes[questionsOpenBoxes.length] = questionsOpenBoxes[randomIndex];
+				questionsOpenBoxes.splice(randomIndex,1);
+				questions[questions.length] = questions[randomIndex];
+				questions.splice(randomIndex,1);	
+				
+				
+			}		
+		}
+		
+		questionDiv.style.visibility = 'visible';
+		answerDiv.style.visibility = 'visible';
+		
+		document.documentElement.onmouseup = dragDropEnd;	
+		document.documentElement.onmousemove = dragDropMove;	
+		setTimeout('resetPositions()',150);
+		window.onresize = resetPositions;
+	}
+
+	/* Reset the form */
+	function dragDropResetForm()
+	{
+		for(var no=0;no<arrayOfAnswers.length;no++){
+			arrayOfAnswers[no].className='dragDropSmallBox'
+			answerDiv.appendChild(arrayOfAnswers[no]);			
+		}	
+	}
+	
+	window.onload = initDragDropScript;
+	
+	</script>
+	
+        <!--begin crossword head-->
+        
+       <meta name="generator" content="EclipseCrossword" />
+<style type="text/css"><!--
+
+body, h1, h2, h3, h4, h5, h6
+{
+	font-family: "Segoe UI, Franklin Gothic Medium, Arial, sans-serif";
+}
+
+h1, h2, h3, h4, h5, h6
+{
+	color: #5d6a86;
+}
+
+body
+{
+	cursor: default;
+	font-size: small;
+}
+
+.ecw-answerbox
+{
+	color: black;
+	background-color: #FFFAF0;
+	border-color: #808080;
+	border-style: solid;
+	border-width: 1px;
+	display: block;
+	padding: .75em;
+	width: 240pt;
+}
+
+.ecw-box
+{
+	border-style: solid;
+	border-width: 1pt;
+	cursor: pointer;
+	font-size: .12in;
+	font-weight: bold;
+	height: .18in;
+	overflow: hidden;
+	text-align: center;
+	width: .18in;
+}
+
+.ecw-boxcheated_sel
+{
+	background-color: #FFF1D7;
+	border-color: #C00000;
+	color: #2080D0;
+}
+
+.ecw-boxcheated_unsel
+{
+	background-color: #ffffff;
+	border-color: #606060;
+	color: #2080D0;
+}
+
+.ecw-boxerror_sel
+{
+	background-color: #FFF1D7;
+	border-color: #C00000;
+	color: #BF0000;
+}
+
+.ecw-boxerror_unsel
+{
+	background-color: #FFF0F0;
+	border-color: #606060;
+	color: #BF0000;
+}
+
+.ecw-boxnormal_sel
+{
+	background-color: #FFF1D7;
+	border-color: #C00000;
+	color: #000000;
+}
+
+.ecw-boxnormal_unsel
+{
+	background-color: #ffffff;
+	border-color: #606060;
+	color: #000000;
+}
+
+.ecw-button
+{
+	width: 64pt;
+}
+
+.ecw-cluebox
+{
+	border-bottom-width: 1px;
+	border-color: #c0c0c0;
+	border-left-width: 0px;
+	border-right-width: 0px;
+	border-style: solid;
+	border-top-width: 1px;
+	margin-top: 1em;
+	padding-bottom: .5em;
+	padding-left: 0pt;
+	padding-right: 0pt;
+	padding-top: .5em;
+}
+
+.ecw-crosswordarea
+{
+	background-color: #D0D8E0;
+	border-color: #808080;
+	border-style: solid;
+	border-width: 2px;
+	padding: .5em;
+	font-family: "Segoe UI, Verdana, Arial, sans-serif";
+	font-size: small;
+}
+
+.ecw-copyright
+{
+	margin-bottom: 1em;
+	font-size: x-small;
+	font-family: "Segoe UI, Franklin Gothic Medium, Arial, sans-serif";
+}
+
+.ecw-input
+{
+	font-family: "Segoe UI, Franklin Gothic Medium, Arial, sans-serif";
+}
+
+.ecw-wordlabel
+{
+	text-transform: uppercase;
+	margin: 0;
+}
+
+.ecw-wordinfo
+{
+	font-size: 8pt;
+	color: #808080;
+}
+
+.ecw-worderror
+{
+	color: #c00000;
+	font-weight: bold;
+	display: none;
+	margin-top: 1em;
+}
+
+--></style>
+
+        
+        <!--begin head of quiz-->
+	<title>Health Care and Public Policy for the Confused, Concerned, and Curious | by Mark Robinson</title>
+	<!--<link rel="stylesheet" href="normalize.css"></link>
+	<link rel="stylesheet" href="bootstrap/css/bootstrap.min.css"></link>
+	<link rel="stylesheet" href="style.css"></link>
+	<script src="jquery-1.8.2.min.js"></script>
+	<script src="underscore-min.js"></script>
+	<script src="bootstrap/js/bootstrap.min.js"></script>-->
+	
+	<link href="css/base.css" rel="stylesheet" type="text/css" />
+<link href="css/ungraded-with-feedback-no-fx.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="scripts/mootools.v1.11.js"></script>
+<script type="text/javascript" src="scripts/ungraded-with-feedback-no-fx.js"></script>
+</head>
+
+
+<body >
+	<div style="z-index:1000; position:absolute;right:0px;top:0px;" class="amazon"><a href="http://www.amazon.com/Health-Public-Confused-Concerned-Curious/dp/1479296031/ref=zg_bsnr_10771_17"><img src="img/amazon.png"></img></a></div>
+	<div class="top_section">
+		<div class="container">
+			<div class="row">
+	
+	<!--begin body of match-->
+        <div class="title" style="font-family:serif; font-size:2.5em;">Health Care Policy -- Pop Quiz!!</div>
+					<div class="subtitle"><br/>	</div>
+					<div class="author"><i>by Mark Robinson</i><br/>
+					<br/>
+					How much do you know about Obamacare, Health Savings Accounts, single-payer plans, adverse selection, and other issues in health care policy?<br/><br/>  Take this quiz - written by the author of <a href="index.html">Health Care and Public Policy for the Confused, Concerned, and Curious</a> - to find out!</div>
+					
+					<br/>
+					<div style="font-family:Helvetica,Arial,sans-serif; font-size:25px; line-height: 30px; color:blue;"><center><a href="#matching">Matching</a> * <a href="#cross">Crossword Puzzle</a> * <a href="#trueorfalse">True or False</a> * <a href="#multiple">Multiple Choice</a> * <a href="#think">Think it out!</a></center></div>
+			<br/>
+			<a href="http://www.amazon.com/Health-Public-Confused-Concerned-Curious/dp/1479296031/ref=zg_bsnr_10771_17"><button type="submit" class="btn btn-primary">Buy the book</button></a>
+		<script>function fbs_click() {u=location.href;t=document.title;window.open('http://www.facebook.com/sharer.php?u='+encodeURIComponent(u)+'&t='+encodeURIComponent(t),'sharer','toolbar=0,status=0,width=626,height=436');return false;}</script><style> html .fb_share_link { padding:2px 0 0 20px; height:16px; background:url(http://static.ak.facebook.com/images/share/facebook_share_icon.gif?6:26981) no-repeat top left; }</style><a rel="nofollow" href="http://www.facebook.com/share.php?u=<;url>" onclick="return fbs_click()" target="_blank" class="fb_share_link">Share this quiz on Facebook!</a>
+<p>&nbsp;</p>
+					
+					<hr/>
+	
+	<center><div class="title" style="font-family:serif; font-size:2.5em;" id="matching">Matching</div></center>
+	<br/>
+	<p>Match the sources of health insurance with the percentage of nonelderly Americans who got insurance from each source in 2011, according to the <a href="http://www.ebri.org/pdf/briefspdf/EBRI_IB_09-2012_No376_Sources.pdf">Employee Benefit Research Institute</a>.</p>
+	<br/>
+	<div id="dragScriptContainer">
+	<div id="questionDiv">
+		<div class="dragDropSmallBox" id="q1">Employment</div>
+		<div class="destinationBox"></div>
+		<div class="dragDropSmallBox" id="q2">Medicare</div>
+		<div class="destinationBox"></div>
+		<div class="dragDropSmallBox" id="q3">Medicaid</div>
+		<div class="destinationBox"></div>
+		<div class="dragDropSmallBox" id="q4">Individually-bought</div>
+		<div class="destinationBox"></div>
+		<div class="dragDropSmallBox" id="q5">Uninsured</div>
+		<div class="destinationBox"></div>
+		
+	
+	</div>
+	
+	
+	<div id="answerDiv">
+		<div class="dragDropSmallBox" id="a1">58.4%</div>
+		<div class="dragDropSmallBox" id="a2">3.2%</div>
+		<div class="dragDropSmallBox" id="a3">17.6%</div>
+		<div class="dragDropSmallBox" id="a4">7.1%</div>
+		<div class="dragDropSmallBox" id="a5">18%</div>
+		
+	</div>
+	
+</div>
+<div id="dragContent"></div>
+<center><input type="button" onclick="dragDropResetForm();return false" value="Reset"></center>
+    <br/>
+			<a href="http://www.amazon.com/Health-Public-Confused-Concerned-Curious/dp/1479296031/ref=zg_bsnr_10771_17"><button type="submit" class="btn btn-primary">Buy the book</button></a>
+		<script>function fbs_click() {u=location.href;t=document.title;window.open('http://www.facebook.com/sharer.php?u='+encodeURIComponent(u)+'&t='+encodeURIComponent(t),'sharer','toolbar=0,status=0,width=626,height=436');return false;}</script><style> html .fb_share_link { padding:2px 0 0 20px; height:16px; background:url(http://static.ak.facebook.com/images/share/facebook_share_icon.gif?6:26981) no-repeat top left; }</style><a rel="nofollow" href="http://www.facebook.com/share.php?u=<;url>" onclick="return fbs_click()" target="_blank" class="fb_share_link">Share this quiz on Facebook!</a>
+<p>&nbsp;</p>
+					
+					<hr/>
+    
+    
+    <!--begin Crossword body-->
+    <center><div class="title" style="font-family:serif; font-size:2.5em;" id="cross">Crossword Puzzle</div></center>
+	<br/>
+	
+	<br/>
+    
+    <center>
+    <h1></h1>
+<h3 style="margin-top: -1em;"></h3>
+
+<div id="waitmessage" class="ecw-answerbox">
+	This interactive crossword puzzle requires JavaScript and any 
+	recent web browser, including Windows Internet Explorer, Mozilla Firefox, Google Chrome, or 
+	Apple Safari.  If you have disabled web page scripting, please re-enable it and refresh
+	the page.  If this web page is saved on your computer, you may need to click the yellow Information Bar at the top or bottom of
+	the page to allow the puzzle to load.
+</div>
+
+<table cellpadding="0" cellspacing="0" border="0"><tr>
+
+<td class="ecw-crosswordarea">
+
+<script type="text/javascript"><!--
+	CrosswordWidth = 14;
+	CrosswordHeight = 14;
+	Words = 12;
+	WordLength = new Array(7, 6, 7, 9, 8, 8, 7, 5, 7, 8, 4, 8);
+	Word = new Array("SPECIAL", "MARKET", "DENYING", "INCENTIVE", "CONGRESS", "MEDICARE", "PARENTS", "HUMAN", "ADVERSE", "EIGHTEEN", "HIGH", "MEDICAID");
+	Clue = new Array("Many conservatives believe that limiting the scope of government will limit the influence of _______ interests on public policy. (7)", 
+"Many conservatives believe that ________ competition will force health care providers to improve the quality of care, lower their prices, and adopt superior technologies and methods of organizations. (6)", 
+"In order to survive in the marketplace, insurance companies sometimes react to adverse selection by _______ insurance coverage to those who need it most.  (7)", 
+"Many conservatives believe that when people purchase routine medical care through insurance, they have little _________ to seek out inexpensive treatment. (9)", 
+"Obamacareís three-legged stool may not work if the individual mandate is not enforced, if insurers continue to discriminate against older and sicker people despite regulations, or if ________ does not provide adequate financial assistance to those trying to purchase health insurance. (8)", 
+"A government program which covers elderly people, younger people with disabilities, and those with End Stage Renal Disease. (8)", 
+"Many liberals believe that while hard work and strong character are important, life is to some extent a giant lottery.  The biggest part of that lottery is who your _______ are. (7)", 
+"A _____ right is something that is fundamental to living a life of human dignity,  like being able to have a family, get an education, work, think and speak freely, vote or otherwise participate in government, and have access to basic needs. (5)", 
+"Because of _______ selection, if an insurer sells a policy for $3,000 per year, it will attract many customers with more than $3,000 of yearly expenses. (7)", 
+"Percentage of nonelderly Americans with no health insurance in 2011.  (8)", 
+"Health Savings Accounts are tax-preferred accounts similar to IRAs.  People can save money in HSAs and use them to purchase health care directly.  To use an HSA, you must have ____-deductible insurance. (4)", 
+"A government program that covers various groups of people who are considered in need of financial assistance. (8)");
+	AnswerHash = new Array(95804, 15671, 40262, 9765, 39580, 95018, 17001, 18367, 4955, 85517, 10775, 41071);
+	WordX = new Array(3, 1, 7, 0, 3, 1, 12, 1, 8, 5, 0, 3);
+	WordY = new Array(1, 3, 4, 7, 10, 13, 0, 1, 1, 3, 6, 6);
+	LastHorizontalWord = 5;
+	OnlyCheckOnce = false;
+//-->
+</script>
+
+<script type="text/javascript"><!--
+
+// EclipseCrossword (C) Copyright 2000-2012 Green Eclipse.
+// The puzzle itself remains the property of its creator. Do not remove this copyright notice.
+
+var BadChars = "`~!@^*()_={[}]\\|:;\"',<>/?";
+
+var TableAcrossWord, TableDownWord;
+var CurrentWord, PrevWordHorizontal, x, y, i, j;
+var CrosswordFinished, Initialized;
+
+// Check the user's browser and then initialize the puzzle.
+if (document.getElementById("waitmessage") != null)
+{
+	document.getElementById("waitmessage").innerHTML = "Please wait while the crossword is loaded...";
+	
+	// Current game variables
+	CurrentWord = -1;
+	PrevWordHorizontal = false;
+	
+	// Create the cell-to-word arrays.
+	TableAcrossWord = new Array(CrosswordWidth);
+	for (var x = 0; x < CrosswordWidth; x++) TableAcrossWord[x] = new Array(CrosswordHeight);
+	TableDownWord = new Array(CrosswordWidth);
+	for (var x = 0; x < CrosswordWidth; x++) TableDownWord[x] = new Array(CrosswordHeight);
+	for (var y = 0; y < CrosswordHeight; y++)
+		for (var x = 0; x < CrosswordWidth; x++)
+		{
+			TableAcrossWord[x][y] = -1;
+			TableDownWord[x][y] = -1;
+		}
+	
+	// First, add the horizontal words to the puzzle.
+	for (var i = 0; i <= LastHorizontalWord; i++)
+	{
+		x = WordX[i];
+		y = WordY[i];
+		for (var j = 0; j < WordLength[i]; j++)
+		{
+			TableAcrossWord[x + j][y] = i;
+		}
+	}
+	
+	// Second, add the vertical words to the puzzle.
+	for (var i = LastHorizontalWord + 1; i < Words; i++)
+	{
+		x = WordX[i];
+		y = WordY[i];
+		for (var j = 0; j < WordLength[i]; j++)
+		{
+			TableDownWord[x][y + j] = i;
+		}
+	}
+	
+	// Now, insert the crossword table.
+	document.writeln("<table id=\"crossword\" cellpadding=\"0\" cellspacing=\"0\" style=\"display: none; border-collapse: collapse;\">");
+	for (var y = 0; y < CrosswordHeight; y++)
+	{
+		document.writeln("<tr>");
+		for (var x = 0; x < CrosswordWidth; x++)
+		{
+			if (TableAcrossWord[x][y] >= 0 || TableDownWord[x][y] >= 0)
+				document.write("<td id=\"c" + PadNumber(x) + PadNumber(y) + "\" class=\"ecw-box ecw-boxnormal_unsel\" onclick=\"SelectThisWord(event);\">&nbsp;</td>");
+			else
+				document.write("<td><\/td>");
+		}
+		document.writeln("<\/tr>");
+	}
+	document.writeln("<\/table>");
+	
+	// Finally, show the crossword and hide the wait message.
+	Initialized = true;
+	document.getElementById("waitmessage").style.display = "none";
+	document.getElementById("crossword").style.display = "block";
+}
+
+// * * * * * * * * * *
+// Event handlers
+
+// Raised when a key is pressed in the word entry box.
+function WordEntryKeyPress(event)
+{
+	if (CrosswordFinished) return;
+	// Treat an Enter keypress as an OK click.
+	if (CurrentWord >= 0 && event.keyCode == 13) OKClick();
+}
+
+// * * * * * * * * * *
+// Helper functions
+
+// Called when we're ready to start the crossword.
+function BeginCrossword()
+{
+	if (Initialized)
+	{
+		document.getElementById("welcomemessage").style.display = "";
+		document.getElementById("checkbutton").style.display = "";
+	}
+}
+
+// Returns true if the string passed in contains any characters prone to evil.
+function ContainsBadChars(theirWord)
+{
+	for (var i = 0; i < theirWord.length; i++)
+		if (BadChars.indexOf(theirWord.charAt(i)) >= 0) return true;
+	return false;
+}
+
+// Pads a number out to three characters.
+function PadNumber(number)
+{
+	if (number < 10)
+		return "00" + number;
+	else if (number < 100)
+		return "0" + number;
+	else
+		return "" +  number;
+}
+
+// Returns the table cell at a particular pair of coordinates.
+function CellAt(x, y)
+{
+	return document.getElementById("c" + PadNumber(x) + PadNumber(y));
+}
+
+// Deselects the current word, if there's a word selected.  DOES not change the value of CurrentWord.
+function DeselectCurrentWord()
+{
+	if (CurrentWord < 0) return;
+	var x, y, i;
+	
+	document.getElementById("answerbox").style.display = "none";
+	ChangeCurrentWordSelectedStyle(false);
+	CurrentWord = -1;
+	
+}
+
+// Changes the style of the cells in the current word.
+function ChangeWordStyle(WordNumber, NewStyle)
+{
+	if (WordNumber< 0) return;
+	var x = WordX[WordNumber];
+	var y = WordY[WordNumber];
+	
+	if (WordNumber<= LastHorizontalWord)
+		for (i = 0; i < WordLength[WordNumber]; i++)
+			CellAt(x + i, y).className = NewStyle;
+	else
+		for (i = 0; i < WordLength[WordNumber]; i++)
+			CellAt(x, y + i).className = NewStyle;
+}
+
+// Changes the style of the cells in the current word between the selected/unselected form.
+function ChangeCurrentWordSelectedStyle(IsSelected)
+{
+	if (CurrentWord < 0) return;
+	var x = WordX[CurrentWord];
+	var y = WordY[CurrentWord];
+	
+	if (CurrentWord <= LastHorizontalWord)
+		for (i = 0; i < WordLength[CurrentWord]; i++)
+			CellAt(x + i, y).className = CellAt(x + i, y).className.replace(IsSelected ? "_unsel" : "_sel", IsSelected ? "_sel" : "_unsel");
+	else
+		for (i = 0; i < WordLength[CurrentWord]; i++)
+			CellAt(x, y + i).className = CellAt(x, y + i).className.replace(IsSelected ? "_unsel" : "_sel", IsSelected ? "_sel" : "_unsel");
+}
+
+// Selects the new word by parsing the name of the TD element referenced by the 
+// event object, and then applying styles as necessary.
+function SelectThisWord(event)
+{
+	if (CrosswordFinished) return;
+	var x, y, i, TheirWord, TableCell;
+	
+	// Deselect the previous word if one was selected.
+	document.getElementById("welcomemessage").style.display = "none";
+	if (CurrentWord >= 0) OKClick();
+	DeselectCurrentWord();
+	
+	// Determine the coordinates of the cell they clicked, and then the word that
+	// they clicked.
+	var target = (event.srcElement ? event.srcElement: event.target);
+	x = parseInt(target.id.substring(1, 4), 10);
+	y = parseInt(target.id.substring(4, 7), 10);
+	
+	// If they clicked an intersection, choose the type of word that was NOT selected last time.
+	if (TableAcrossWord[x][y] >= 0 && TableDownWord[x][y] >= 0)
+		CurrentWord = PrevWordHorizontal ? TableDownWord[x][y] : TableAcrossWord[x][y];
+	else if (TableAcrossWord[x][y] >= 0)
+		CurrentWord = TableAcrossWord[x][y];
+	else if (TableDownWord[x][y] >= 0)
+		CurrentWord = TableDownWord[x][y];
+
+	PrevWordHorizontal = (CurrentWord <= LastHorizontalWord);
+	
+	// Now, change the style of the cells in this word.
+	ChangeCurrentWordSelectedStyle(true);
+	
+	// Then, prepare the answer box.
+	x = WordX[CurrentWord];
+	y = WordY[CurrentWord];
+	TheirWord = "";
+	var TheirWordLength = 0;
+	for (i = 0; i < WordLength[CurrentWord]; i++)
+	{
+		// Find the appropriate table cell.
+		if (CurrentWord <= LastHorizontalWord)
+			TableCell = CellAt(x + i, y);
+		else
+			TableCell = CellAt(x, y + i);
+		// Add its contents to the word we're building.
+		if (TableCell.innerHTML != null && TableCell.innerHTML.length > 0 && TableCell.innerHTML != " " && TableCell.innerHTML.toLowerCase() != "&nbsp;")
+		{
+			TheirWord += TableCell.innerHTML.toUpperCase();
+			TheirWordLength++;
+		}
+		else
+		{
+			TheirWord += "&bull;";
+		}
+	}
+	
+	document.getElementById("wordlabel").innerHTML = TheirWord;
+	document.getElementById("wordinfo").innerHTML = ((CurrentWord <= LastHorizontalWord) ? "Across, " : "Down, ") + WordLength[CurrentWord] + " letters.";
+	document.getElementById("wordclue").innerHTML = Clue[CurrentWord];
+	document.getElementById("worderror").style.display = "none";
+	document.getElementById("cheatbutton").style.display = (Word.length == 0) ? "none" : "";
+	if (TheirWordLength == WordLength[CurrentWord])
+		document.getElementById("wordentry").value = TheirWord.replace(/&AMP;/g, '&');
+	else
+		document.getElementById("wordentry").value = "";
+	
+	// Finally, show the answer box.
+	document.getElementById("answerbox").style.display = "block";
+	try
+	{
+		document.getElementById("wordentry").focus();
+		document.getElementById("wordentry").select();
+	}
+	catch (e)
+	{
+	}
+	
+}
+
+// Called when the user clicks the OK link.
+function OKClick()
+{
+	var TheirWord, x, y, i, TableCell;
+	if (CrosswordFinished) return;
+	if (document.getElementById("okbutton").disabled) return;
+	
+	// First, validate the entry.
+	TheirWord = document.getElementById("wordentry").value.toUpperCase();
+	if (TheirWord.length == 0)
+	{
+		DeselectCurrentWord();
+		return;
+	}
+	if (ContainsBadChars(TheirWord))
+	{
+		document.getElementById("worderror").innerHTML = "The word that you typed contains invalid characters.  Please type only letters in the box above.";
+		document.getElementById("worderror").style.display = "block";
+		return;
+	}
+	if (TheirWord.length < WordLength[CurrentWord])
+	{
+		document.getElementById("worderror").innerHTML  = "You did not type enough letters.  This word has " + WordLength[CurrentWord] + " letters.";
+		document.getElementById("worderror").style.display = "block";
+		return;
+	}
+	if (TheirWord.length > WordLength[CurrentWord])
+	{
+		document.getElementById("worderror").innerHTML = "You typed too many letters.  This word has " + WordLength[CurrentWord] + " letters.";
+		document.getElementById("worderror").style.display = "block";
+		return;
+	}
+	
+	// If we made it this far, they typed an acceptable word, so add these letters to the puzzle and hide the entry box.
+	x = WordX[CurrentWord];
+	y = WordY[CurrentWord];
+	for (i = 0; i < TheirWord.length; i++)
+	{
+		TableCell = CellAt(x + (CurrentWord <= LastHorizontalWord ? i : 0), y + (CurrentWord > LastHorizontalWord ? i : 0));
+		TableCell.innerHTML = TheirWord.substring(i, i + 1);
+	}
+	DeselectCurrentWord();
+}
+
+// Called when the "check puzzle" link is clicked.
+function CheckClick()
+{
+	var i, j, x, y, UserEntry, ErrorsFound = 0, EmptyFound = 0, TableCell;
+	if (CrosswordFinished) return;
+	DeselectCurrentWord();
+	
+	for (y = 0; y < CrosswordHeight; y++)
+	for (x = 0; x < CrosswordWidth; x++)
+		if (TableAcrossWord[x][y] >= 0 || TableDownWord[x][y] >= 0)
+		{
+			TableCell = CellAt(x, y);
+			if (TableCell.className == "ecw-box ecw-boxerror_unsel") TableCell.className = "ecw-box ecw-boxnormal_unsel";
+		}
+		
+	for (i = 0; i < Words; i++)
+	{
+		// Get the user's entry for this word.
+		UserEntry = "";
+		for (j = 0; j < WordLength[i]; j++)
+		{
+			if (i <= LastHorizontalWord)
+				TableCell = CellAt(WordX[i] + j, WordY[i]);
+			else
+				TableCell = CellAt(WordX[i], WordY[i] + j);
+			if (TableCell.innerHTML.length > 0 && TableCell.innerHTML.toLowerCase() != "&nbsp;")
+			{
+				UserEntry += TableCell.innerHTML.toUpperCase();
+			}
+			else
+			{
+				UserEntry = "";
+				EmptyFound++;
+				break;
+			}
+		}
+		UserEntry = UserEntry.replace(/&AMP;/g, '&');
+		// If this word doesn't match, it's an error.
+		if (HashWord(UserEntry) != AnswerHash[i] && UserEntry.length > 0)
+		{
+			ErrorsFound++;
+			ChangeWordStyle(i, "ecw-box ecw-boxerror_unsel");
+		}
+	}
+	
+	// If they can only check once, disable things prematurely.
+	if ( OnlyCheckOnce )
+	{
+		CrosswordFinished = true;
+		document.getElementById("checkbutton").style.display = "none";
+	}
+	
+	// If errors were found, just exit now.
+	if (ErrorsFound > 0 && EmptyFound > 0)
+		document.getElementById("welcomemessage").innerHTML = ErrorsFound + (ErrorsFound > 1 ? " errors" : " error") + " and " + EmptyFound + (EmptyFound > 1 ? " incomplete words were" : " incomplete word was") + " found.";
+	else if (ErrorsFound > 0)
+		document.getElementById("welcomemessage").innerHTML = ErrorsFound + (ErrorsFound > 1 ? " errors were" : " error was") + " found.";
+	else if (EmptyFound > 0)
+		document.getElementById("welcomemessage").innerHTML = "No errors were found, but " + EmptyFound + (EmptyFound > 1 ? " incomplete words were" : " incomplete word was") + " found.";
+	
+	if (ErrorsFound + EmptyFound > 0)
+	{
+		document.getElementById("welcomemessage").style.display = "";
+		return;
+	}
+			
+	// They finished the puzzle!
+	CrosswordFinished = true;
+	document.getElementById("checkbutton").style.display = "none";
+	document.getElementById("congratulations").style.display = "block";
+	document.getElementById("welcomemessage").style.display = "none";
+}
+
+// Called when the "cheat" link is clicked.
+function CheatClick()
+{
+	if (CrosswordFinished) return;
+	var OldWord = CurrentWord;
+	document.getElementById("wordentry").value = Word[CurrentWord];
+	OKClick();
+	ChangeWordStyle(OldWord, "ecw-box ecw-boxcheated_unsel");
+}
+
+// Returns a one-way hash for a word.
+function HashWord(Word)
+{
+	var x = (Word.charCodeAt(0) * 719) % 1138;
+	var Hash = 837;
+	var i;
+	for (i = 1; i <= Word.length; i++)
+		Hash = (Hash * i + 5 + (Word.charCodeAt(i - 1) - 64) * x) % 98503;
+	return Hash;
+}
+
+//-->
+</script>
+
+</td>
+
+<td valign="top" style="padding-left: 1em;">
+
+<div class="ecw-copyright">
+	<a href="http://www.eclipsecrossword.com/" onclick="this.target='_blank'" style="font-weight: bold;">EclipseCrossword</a> &copy; 2000-2011
+</div>
+
+<div id="welcomemessage" class="ecw-answerbox" style="display:none;">
+<h3>Welcome!</h3>
+<p>Click a word in the puzzle to get started.</p>
+</div>
+
+<div id="answerbox" class="ecw-answerbox" style="display:none;">
+<h3 id="wordlabel" class="ecw-wordlabel"> &nbsp;</h3>
+<div id="wordinfo" class="ecw-wordinfo"> </div>
+<div id="wordclue" class="ecw-cluebox"> </div>
+<div style="margin-top: 1em;">
+	<input class="ecw-input" id="wordentry" type="text" size="24" style="font-weight: bold; text-transform:uppercase;" onkeypress="WordEntryKeyPress(event)" onchange="WordEntryKeyPress(event)" />
+</div>
+<div id="worderror" class="ecw-worderror"></div>
+
+<table border="0" cellspacing="0" cellpadding="0" width="100%" style="margin-top:1em;"><tbody><tr><td>
+<button id="cheatbutton" type="button" class="ecw-input ecw-button" onclick="CheatClick();">Solve</button>
+</td><td align="right">
+<button id="okbutton" type="button" class="ecw-input ecw-button" onclick="OKClick();" style="font-weight: bold;">OK</button> &nbsp;
+<button id="cancelbutton" type="button" class="ecw-input ecw-button" onclick="DeselectCurrentWord();">Cancel</button>
+</td></tr></tbody></table>
+
+</div>
+
+<div id="congratulations" class="ecw-answerbox" style="display:none;">
+<h3>Congratulations!</h3>
+<p>You have completed this <a href="http://www.eclipsecrossword.com" style="color: black; text-decoration:none;">crossword puzzle</a>.
+</p>
+<p>If you would like to be able to create interactive
+<a href="http://www.eclipsecrossword.com" style="color: black; text-decoration:none;">crosswords</a>
+like this yourself, get <a href="http://www.eclipsecrossword.com" onclick="this.target='_blank'">EclipseCrossword</a>
+from Green Eclipse&mdash;it's free!
+</p>
+</div>
+
+</td></tr></table>
+
+<div style="margin-top: 1em;">
+	<button id="checkbutton" type="button" onclick="CheckClick();" style="display: none;">Check puzzle</button>
+</div>
+
+<script type="text/javascript"><!--
+BeginCrossword();
+//-->
+</script>
+
+<!-- Created with EclipseCrossword, (C) Copyright 2000-2012 Green Eclipse.  eclipsecrossword.com -->
+
+
+    </center>
+    <br/>
+			<a href="http://www.amazon.com/Health-Public-Confused-Concerned-Curious/dp/1479296031/ref=zg_bsnr_10771_17"><button type="submit" class="btn btn-primary">Buy the book</button></a>
+		<script>function fbs_click() {u=location.href;t=document.title;window.open('http://www.facebook.com/sharer.php?u='+encodeURIComponent(u)+'&t='+encodeURIComponent(t),'sharer','toolbar=0,status=0,width=626,height=436');return false;}</script><style> html .fb_share_link { padding:2px 0 0 20px; height:16px; background:url(http://static.ak.facebook.com/images/share/facebook_share_icon.gif?6:26981) no-repeat top left; }</style><a rel="nofollow" href="http://www.facebook.com/share.php?u=<;url>" onclick="return fbs_click()" target="_blank" class="fb_share_link">Share this quiz on Facebook!</a>
+<p>&nbsp;</p>
+					
+					<hr/>
+
+ 
+    
+    <!--begin body of quiz-->
+    <center><div class="title" style="font-family:serif; font-size:2.5em;" id="trueorfalse">True or False</div></center>
+	<br/>
+	
+	<br/>
+	
+		<br/>
+		
+		
+		<h1>1.  Once Obamacare is fully implemented, many more Americans will be getting health insurance directly from the government.</h1>
+
+<dl id="question1">
+
+  <dt>True</dt>
+    <dd class="correct"><b>Right!</b>  Obamacare will allow everyone who makes incomes up to 133% of the poverty line to get insurance through Medicaid. <br/><br/>
+
+Before Obamacare was passed, other plans to expand government insurance coverage were considered: specifically, a plan to lower the age for which people are eligible for Medicare, and a plan to allow anyone to buy into a “public option”, which would be a public insurance program that would compete with private plans.  Those two ideas weren't enacted, but the Medicaid expansion was.  (Note, however, that the Supreme Court ruling allowed state governments to decline federal Medicaid fundings, so low-income people in certain states may not get coverage through Medicaid.  Many Republican governors have vowed not to accept the funds.)
+</dd>
+    
+    <dt>False</dt>
+    <dd>Sorry!</dd>
+    
+   
+</dl>
+<p>&nbsp;</p>
+<h1>2.  Many conservatives argue that the government shouldn't intervene in the health care market because they deny the existence of adverse selection.</h1>
+
+<dl id="question2">
+
+  <dt>True</dt>
+    <dd>Nope!</dd>
+    
+    <dt>False.</dt>
+    <dd class="correct">That's it!  Adverse selection is a basic economic concept whose existence is acknowledged by all economists. However, liberals and conservatives disagree on how the government should respond to adverse selection. According to free-market advocate Thomas Sowell, the fact that the market has flaws doesn't mean that the government should rush to correct those flaws. "The fact that the government can sometimes improve on the situation that would exist in a free market does not mean that is will in fact restrict its activities to such useful things," he says.</dd>
+    
+    
+
+</dl>
+<p>&nbsp;</p>
+<h1>3.  Many liberals argue that the government should intervene in the health care market because it has the same inefficiencies that can be found in other parts of the economy.</h1>
+<dl id="question3">
+
+  <dt>True</dt>
+    <dd>Yup!  Market competition has caused amazing advances in technology, food production, and many other fields.  Many free-market advocates believe that competition can have a similar effect in medicine and health care...so long as government gets out of the way.</dd>
+    
+    <dt>False</dt>
+    <dd class="correct">Sorry!  In an ideal world, a democratically-elected government will do whatever is best for the general public.  In the real world, politicians are often bought off by special interests.  Conservatives believe this problem can be minimized by reducing the areas in which government is involved.</dd>
+    
+
+
+</dl>
+<p>&nbsp;</p>
+<br/>
+			<a href="http://www.amazon.com/Health-Public-Confused-Concerned-Curious/dp/1479296031/ref=zg_bsnr_10771_17"><button type="submit" class="btn btn-primary">Buy the book</button></a>
+		<script>function fbs_click() {u=location.href;t=document.title;window.open('http://www.facebook.com/sharer.php?u='+encodeURIComponent(u)+'&t='+encodeURIComponent(t),'sharer','toolbar=0,status=0,width=626,height=436');return false;}</script><style> html .fb_share_link { padding:2px 0 0 20px; height:16px; background:url(http://static.ak.facebook.com/images/share/facebook_share_icon.gif?6:26981) no-repeat top left; }</style><a rel="nofollow" href="http://www.facebook.com/share.php?u=<;url>" onclick="return fbs_click()" target="_blank" class="fb_share_link">Share this quiz on Facebook!</a>
+<p>&nbsp;</p>
+					
+					<hr/>
+
+ 
+    
+    <!--MC questions-->
+    <center><div class="title" style="font-family:serif; font-size:2.5em;" id="multiple">Multiple Choice</div></center>
+	<br/>
+	
+<p>&nbsp;</p>
+
+<h1>1.  One of Obamacare's major goals is to increase the number of Americans with insurance.  Which of the following is a method that the legislation will use to increase the number of Americans with insurance?</h1>
+<dl id="question7">
+
+  <dt>All Americans with incomes below 133% of the federal poverty line will be eligible for Medicare.</dt>
+    <dd  >Incorrect!  Under Obamacare, all Americans with income below 133% of the federal poverty line will be eligible for Medicaid, not Medicare.  However, following the Supreme Court ruling in July 2012, states are able to decline this expansion of Medicaid.  So, there may still be some Americans with incomes below 133% of the poverty line that will not have access to Medicaid.</dd>
+    
+    <dt class="correct">Exchanges, or websites, will be set up at which individual Americans can buy private insurance that has been rated "White Belt", "Green Belt", "Blue Belt", or "Black Belt."</dt>
+    <dd>Nope!  Exchanges will be set up at which Americans can buy insurance.  In order to make it easier for people to compare plans, each insurance plan will be rated bronze, silver, gold, and platinum.</dd>
+    
+    <dt>Some Americans will be eligible to buy private insurance with subsidies from the federal government.</dt>
+    <dd class="correct">That's it!  In 2010 dollars, any family of four making up to $88,200 will be eligible for federal subsidies when buying private insurance.  But those making under 133% of the federal proverty line - which is $29,327 in 2010 dollars for a family of four - would be eligible for Medicaid and so wouldn't need to buy private insurance.</dd>
+    
+    <dt>Health care exchanges will have a "public option" which will allow people to buy insurance directly from the government rather than through private insurers.</dt>
+    <dd>Sorry!  A public option was included in early drafts of the legislation but it was removed because there were not enough votes in Congress to pass the legislation with a public option.  The final legislation does include an expansion of government health care - the expansion of Medicaid to everyone under 133% of the poverty line - but those who do not qualify for Medicaid or other government programs will continue to have no option except private insurance.</dd>
+
+    
+
+</dl>
+<p>&nbsp;</p>
+
+<h1>2.  Obamacare's plan to expand insurance coverage is often described as a "three-legged stool" because all three elements of the stool are need for the whole thing to work.<br/><br/>Which of the following is NOT one of the legs of the stool??</h1>
+<dl id="question8">
+
+  <dt >Prohibiting insurers from charging higher premiums or denying coverage to people due to their health status or pre-existing conditions</dt>
+    <dd>Nope!  The government will, in fact, make it illegal for insurers to discriminate against people with pre-exisiting conditions.  This is possibly the most popular part of Obamacare, and one of the major goals of the legislation.</dd>
+  
+  <dt>An individual mandate to buy insurance.</dt>
+    <dd  >Sorry!  One of the legs of the stool is that insurers will be prohibited from denying coverage to people with pre-existing conditions.  It is feared that once this provision is in place, healthy people will have no incentive to buy insurance, since they can just wait until they are sick and buy it then.  (This would cause the insurance system to collapse, because insurance companies can only stay in business if most of their customers are paying more in premiums than they are costing the insurance company in health expense claims.)  To deal with this problem, the government will compel almost everyone to buy insurance even if they don't want to.  Starting in 2014, the government will be requiring most people to have insurance coverage or else pay a tax.</dd>
+    
+    
+    
+    <dt>Medicare payment advisory board.</dt>
+    <dd class="correct">That's it!  The Medicare board is part of the Obamacare legislation's effort to control costs.  It is not part of the effort to expand coverage, and not part of the three-legged stool.</dd>
+    
+    <dt>Providing financial assistance.</dt>
+    <dd>Sorry!  Since Obamacare contains an individual mandate to buy insurance, it was decided that the law must provide financial assistance to those who can't afford to buy insurance.  Forcing relatively low-income people to buy insurance, without financial assistance, would be too much of a hardship.</dd>
+
+    
+
+</dl>
+<p>&nbsp;</p>
+
+
+
+
+<h1>3.  Many of Obamacare's major provisions are set to come into effect in 2014.  Do you think Obamacare will be successful?
+</h1>
+<dl id="question9">
+
+  <dt >Obamacare will be a huge disaster; the government should stay out of the health care market!</dt>
+    <dd class="correct">Perhaps!  Hopefully, America is not about to experience a nightmare of greedy special interests, ineffective beaurocrats, corruption, poor planning, black markets, waiting lines, rising prices, unclean hospitals, overworked doctors, and soaring deficits.</dd>
+  
+  <dt >Obamacare will be a huge disaster; Obama should have pushed for a single-payer system, or at least he should have fought harder for a public option in the exchanges.</dt>
+    <dd class="correct">Perhaps!  Hopefully, America is not about to experience a nightmare in which poor, overworked citizens are forced to buy insurance from greedy, private insurers who continue to hassle them and deny them care, all while prices continue to soar higher and higher.</dd>
+    
+    <dt >Obamacare will be excellent!</dt>
+    <dd class="correct">Perhaps!  Hopefully, millions of Americans will now have access to the care they need without facing life-altering medical bills.  Obama pledged not to disrupt those who are happy with their current coverage, but if Obamacare works well, perhaps the employer-based system will end voluntarily as millions flock to buy insurance individually in well-run, well-financed health care exchanges.</dd>
+    
+    
+    
+    <dt>Obamacare has the potential to be the start of something great, but it may also flop.</dt>
+    <dd class="correct">Perhaps!  Arguably, Obamacare is based on sound economics.  But what about its politics?  It will be difficult for such a major piece of legislation to succeed with so many Americans, and virtually the entire Republican party, dead set against it.  One danger is that the legislation will be significantly altered, repealed, or underfunded before its major provisions come into effect in 2014.  Another is that officials at the federal or state level will refuse to carry out and enforce the law.<br/><br/>
+    Furthermore, even if Obamacare is generally based on sound economics, it still may need some adjustments, perhaps fairly major adjustments.  Will the political system be responsive enough to ensure Obamacare's success?
+    </dd>
+    
+    <dt>My opinion is too nuanced to be described in a single sentence.</dt>
+    <dd class="correct">Good for you!  A complicated issue like health care policy deserves more than a soundbite.  If you would like an informative, entertaining, and nuanced look at American health care policy, please check out my book, <a href="index.html">Health Care and Public Policy for the Confused, Concerned, and Curious</a>.
+    </dd>
+
+    
+
+</dl>
+<p>&nbsp;</p>
+<br/>
+			<a href="http://www.amazon.com/Health-Public-Confused-Concerned-Curious/dp/1479296031/ref=zg_bsnr_10771_17"><button type="submit" class="btn btn-primary">Buy the book</button></a>
+		<script>function fbs_click() {u=location.href;t=document.title;window.open('http://www.facebook.com/sharer.php?u='+encodeURIComponent(u)+'&t='+encodeURIComponent(t),'sharer','toolbar=0,status=0,width=626,height=436');return false;}</script><style> html .fb_share_link { padding:2px 0 0 20px; height:16px; background:url(http://static.ak.facebook.com/images/share/facebook_share_icon.gif?6:26981) no-repeat top left; }</style><a rel="nofollow" href="http://www.facebook.com/share.php?u=<;url>" onclick="return fbs_click()" target="_blank" class="fb_share_link">Share this quiz on Facebook!</a>
+<p>&nbsp;</p>
+					
+					<hr/>
+
+ 
+    
+    <!--Think it out! questions-->
+    <center><div class="title" style="font-family:serif; font-size:2.5em;" id="think">Think it out!</div></center>
+	<br/>
+	
+
+<p>&nbsp;</p>
+
+<h1>1.  Many nonelderly Americans get health insurance through their employer or a family member's employer.  Many experts think it is problematic that America's health care system is so employment-based.  But there are also advantages.  <br/><br/>Can you name one advantage, and three disadvantages, of an employment-based system?</h1></h1>
+<dl id="question4">
+
+  <dt>Click here to see an advantage.</dt>
+    <dd class="correct">In the market for individual health insurance, older people and those with health problems often can only buy expensive or inadequate insurance.  This is because insurance companies are reluctant to sell insurance to individuals who are likely to cost them money.  But an employment-based system allows older and less healthy people to be grouped with their younger and healthier co-workers; employers often buy insurance plans that cover everyone in the group.</dd>
+   <dt>Click here to see a disadvantage.</dt>
+    <dd class="correct">Unfortunately, an employer-based system often leaves the unemployed, or those employed at jobs that don't offer insurance, either uncovered or covered inadequately.</dd>
+   
+   <dt>Click here to see a disadvantage.</dt>
+    <dd class="correct">Health insurance is a huge expense for many companies, especially those who have to compete with businesses in other countries where insurance is provided by the government, or with businesses in countries where getting health insurance at work is not the norm.</dd>
+    
+    <dt>Click here to see a disadvantage.</dt>
+    <dd class="correct">When people are dependent on their employer for health insurance, "job lock" can result.  This means that employees are extremely reluctant to leave their jobs or start their own business, even if they want to.</dd>
+
+    
+
+</dl>
+
+<h1>2.  In general, "insurance" is something that people use to pay for large rare expenses such as car accidents, not small and routine expenses like gas fillups.  However, many Americans use health insurance to pay for relatively small and predictable expenses like routine checkups.</h1>
+<dl id="question5">
+
+  <dt>Why do conservatives think this is problematic?</dt>
+    <dd class="correct">When insurance is covering all or nearly all of the price, many conservatives believe that neither the doctor nor the patient has adequate incentive to keep costs down.  This causes health care to be overly expensive, which is a tremendous burden on federal and state governments, employers, and families.  The uninsured suffer twice, both because insurance is too expensive to afford and out-of-pocket costs are also too high.</dt>
+    <dt>Why do conservatives believe the government has caused this mess?</dt>
+    <dd class="correct">The government encourages people to purchase medical expenses - even small, routine expenses - in at least three ways: 1) the tax code contains a deduction which effectively subsidizes employer-bought insurance, 2) state and local regulations mandate that insurance plans cover various procedures, and 3) government programs like Medicare and Medicaid are insurance programs which cover both large and small expenses.</dd>
+   <dt>What do conservatives want to do about this?</dt>
+    <dd class="correct">The government should stop favoring employer-bought insurance over other kinds of insurance, and stop favoring insurance over out-of-pocket purchases.  Many conservatives would like to role back the employer-bought insurance deduction or use Health Savings Accounts to provide comparable tax advantages to those who purchase health care out-of-pocket.  Conservatives believe that when people pay for health care directly, they have incentive to shop around, which forces doctors and other medical providers to compete with each other to offer inexpensive, high-quality care.</dd>
+   
+</dl>
+
+
+
+
+<p>&nbsp;</p>
+
+<h1>3.  OK, but don't liberals have a comeback?</h1>
+<dl id="question6">
+
+  <dt>Why do liberals think that paying for small and routine expenses with insurance is not a big problem?</dt>
+    <dd class="correct">The liberal economists Paul Krugman and Robin Wells argue that most health care spending consists of large expenses like chemotherapy, which would be covered by the high-deductible insurance linked to HSAs. Using HSAs to pay for small, routine items like dental checkups won't make a difference on health care spending, say Krugman and Wells, since such small expenses are not a major component of America's total health care spending.</dt>
+    <dt>OK, maybe conservative policy ideas won't reduce spending as much as hoped.  Why are liberals so opposed to them?</dt>
+    <dd class="correct">Liberals don't want the employment-based system to be undermined unless it is replaced with a workable alternative.  In a free market, older and less healthy people often have trouble finding affordable quality insurance. Oftentimes, these people get insurance through an employer, which means their health care is effectively subsidized by their younger and healthier coworkers. But if people save money for health care in individual tax-preferenced health accounts, liberals fear that younger and healthier people will no longer value getting insurance through an employer. If employers stop buying insurance for their employees - and if the government doesn't provide insurance either - then everyone will be buying insurance on their own, and older and less healthy people will have trouble affording quality insurance.</dd>
+   <dt>What do liberals want to do?</dt>
+    <dd class="correct">Most liberals would like the government to provide insurance for everyone; this is called a single-payer system.  Many liberals accept the Obamacare legislation as a suitable political compromise, and are now working to ensure its success.</dd>
+   <dt>Do conservatives have a comeback to the liberal comeback?  And do liberals have a comeback to that comeback?</dt>
+    <dd class="correct">To find out, order your copy of <a href="index.html">Health Care and Public Policy for the Confused, Concerned, and Curious</a> today!</dd>
+   
+   
+   
+</dl>
+
+
+
+
+<a href="http://www.amazon.com/Health-Public-Confused-Concerned-Curious/dp/1479296031/ref=zg_bsnr_10771_17"><button type="submit" class="btn btn-primary">Buy the book</button></a>
+<script>function fbs_click() {u=location.href;t=document.title;window.open('http://www.facebook.com/sharer.php?u='+encodeURIComponent(u)+'&t='+encodeURIComponent(t),'sharer','toolbar=0,status=0,width=626,height=436');return false;}</script><style> html .fb_share_link { padding:2px 0 0 20px; height:16px; background:url(http://static.ak.facebook.com/images/share/facebook_share_icon.gif?6:26981) no-repeat top left; }</style><a rel="nofollow" href="http://www.facebook.com/share.php?u=<;url>" onclick="return fbs_click()" target="_blank" class="fb_share_link">Share this quiz on Facebook!</a>
+
+
+
+
+<p class="pipwerks">The code for this test format was created by Philip Hutchison, March 2008.   <a href="http://pipwerks.com/">http://pipwerks.com/</a></p>
+		
+	</div>
+
+</body>
+
+</html>

@@ -1,0 +1,94 @@
+body {
+	margin: 0px;
+	padding:0px;
+	background-color:#800;
+}
+
+.top_section {
+	width:100%; background-color:#fff0e0;
+	padding-bottom:40px;
+}
+div.box1{
+	height:100px;
+	padding:10px;
+	margin:15px;
+
+}
+
+div.box2 {
+	background-color:#006;
+	color:white;
+	font-family:serif;
+	font-size:1.3em;
+	line-height:1.2em;
+	padding: 40px 120px 110px 110px;
+	height:100px;
+	width:600px;
+	/*height:200px;
+	width:750px;
+	min-height:200px;
+	min-width:750px;*/
+	overflow:hidden;
+	border-radius:3px;
+	text-align:justify;
+}
+
+
+
+
+.carousel-control {
+	margin-top:-4px;	
+}
+
+.carousel {
+	width:830px;
+	height:260px;
+	/*width:800px;
+	height:100px;*/
+}
+
+
+div.footer {
+	width:100%;
+	padding-top:40px;
+	color:white;
+	background: #800;
+	padding-bottom:40px;
+	border-top:solid black 10px;
+	background:url("img/footer-gradient.png") repeat-x;
+}
+
+div.title {
+	font-size:2.5em;
+	line-height:1.4em;
+}
+
+div.subtitle {
+	font-size:1.8em;
+	line-height:1em;
+}
+div.author {
+
+}
+
+div.footer img {
+	border:solid #C00 5px;
+}
+
+div.footer a {
+
+	color:#99F;
+	font-size:1.2em;
+	line-height:1.8em;
+}
+div.footer a:visited {
+	color:#99F;
+}
+
+.bg1, .bg2, .bg3 {
+	
+}
+
+.dropshadow {
+	margin-top:5px;
+}
