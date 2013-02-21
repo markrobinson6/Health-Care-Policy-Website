@@ -11,13 +11,81 @@
 	<title>The Health Care Policy Quiz</title>
 	<lin rel="stylesheet" href="normalize.css"></link>
 	<link rel="stylesheet" href="bootstrap/css/bootstrap.min.css"></link>
-	<link rel="stylesheet" href="style.css"></link>
+	<link rel="stylesheet" href="style2.css"></link>
 	<script src="jquery-1.8.2.min.js"></script>
 	<script src="underscore-min.js"></script>
 	<script src="bootstrap/js/bootstrap.min.js"></script>
 	
 	
-	<script type="text/javascript">
+	
+<style type='text/css'>
+    @import url('//netdna.bootstrapcdn.com/twitter-bootstrap/2.0.4/css/bootstrap-combined.min.css');
+
+#myCarousel {
+  margin-top: 0px;
+}
+
+.carousel-linked-nav,
+.item img {
+  display: block; 
+  margin: 0 auto;
+}
+
+.carousel-linked-nav {
+  width: 1200px;
+  margin-bottom: 0px;   
+}
+
+  </style>
+  
+
+
+<script type='text/javascript'>//<![CDATA[ 
+$(window).load(function(){
+// invoke the carousel
+$('#myCarousel').carousel({
+  interval: 0
+});
+
+/* SLIDE ON CLICK */ 
+
+$('.carousel-linked-nav > a').click(function() {
+
+    // grab href, remove pound sign, convert to number
+    var item = Number($(this).attr('href').substring(1));
+
+    // slide to number -1 (account for zero indexing)
+    $('#myCarousel').carousel(item - 1);
+
+    // remove current active class
+    $('.carousel-linked-nav .active').removeClass('active');
+
+    // add active class to just clicked on item
+    $(this).parent().addClass('active');
+
+    // don't follow the link
+    return false;
+});
+
+/* AUTOPLAY NAV HIGHLIGHT */
+
+// bind 'slid' function
+$('#myCarousel').bind('slid', function() {
+
+    // remove active class
+    $('.carousel-linked-nav .active').removeClass('active');
+
+    // get index of currently active item
+    var idx = $('#myCarousel .item.active').index();
+
+    // select currently active item and add active class
+    $('.carousel-linked-nav li:eq(' + idx + ')').addClass('active');
+
+});
+});//]]>  
+
+</script>
+<script type="text/javascript">
 
   var _gaq = _gaq || [];
   _gaq.push(['_setAccount', 'UA-36926231-1']);
@@ -31,23 +99,109 @@
 
 </script>
 
-
 </head>
 <body >
+	
+
+	
+	
+	
 	<div style="z-index:1000; position:absolute;right:0px;top:0px;" class="amazon"><a href="http://www.amazon.com/Health-Public-Confused-Concerned-Curious/dp/1479296031/ref=zg_bsnr_10771_17"><img src="img/amazon.png"></img></a></div>
 	<div class="top_section">
-		<div class="container">
-			<div class="row">
-				<div id="2x1" class="span10 box box1">
+		
+		<!--<div class="container">-->
+			<center>
+			<!--<div class="row">
+				<div id="2x1" class="span10 box box1">-->
 					<center>
 						<div class="title" style="font-family:serif; font-size: 3.0em;"><a style="color:black" href="quiz.html">The Health Care Policy Quiz</a></div>
 						<div class="subtitle">	</div>
 						<p style="font-family: Trebuchet MS, Lucida Sans Unicode, Arial, sans-serif; font-size: 1.0em;">Test your knowledge of Obamacare, Health Savings Accounts, single payer health care, adverse selection, and more!</p></center>
 				
-				</div>
-			</div>
+				<!--</div>
+			</div>-->
+			<center>
+			<br/><br/>
+			<div style="font-family: Trebuchet MS, Lucida Sans Unicode, Arial, sans-serif; font-size:1.5em" class="carousel-linked-nav pagination">
+				<a href="#1" class="active">Start</a> * <a href="#2">Matching</a> * <a href="#3">Crossword Puzzle</a> * <a href="#4">True or False</a> * <a href="#5">Multiple Choice</a> * <a href="#6">Think it Out!</a> * <a href="#7" target="_blank">Learn More</a></</div>	
+			</center>
 			
-			<center>			
+			<div id="myCarousel" class="carousel slide" data-interval=90000>
+			  	
+				
+				<div class="carousel-inner">
+				    	
+					
+					<div id="2x1" class="active item box2 bg1">
+						<center>
+						<br/><br/><br/><br/>
+						Welcome to the Health Care Policy Quiz!
+						<br/><br/>
+						To get started, press the arrow button on the right of this blue box.
+						<br/><br/>
+						When you are done with a section of the quiz, use the arrow button on the right to move forward.<br/>
+						Use the arrow button on the left to move back.<br/>
+						Or use the above links to jump to a specific section of the quiz.
+						<br/><br/>
+						Good luck!
+						</center>
+					</div>
+					<div id="2x1" class="item box2 bg2">
+						<center>
+						<iframe height="400" width="1010" src="matching2.html"></iframe>
+						
+						
+						</center>
+					</div>
+					<div id="2x1" class="item box2 bg3">
+						<center><iframe height="420" width="1010" src="crossword2.html"></iframe>
+						</center>
+					</div>
+					
+					<div id="2x1" class="item box2 bg4">
+						<center><iframe height="800" width="1010" src="truefalse2.html"></iframe>
+						</center>
+					</div>
+					<div id="2x1" class="item box2 bg5">
+				
+						<center><iframe height="1000" width="1010" src="multiplechoice2.html"></iframe>
+
+						</center>
+					</div>
+					<div id="2x1" class="item box2 bg6">
+				
+						<center><iframe height="1200" width="1010" src="think2.html"></iframe></center>
+					</div>	
+					<div id="2x1" class="item box2 bg7">
+				
+						<center><br/><br/>To learn more about about health care policy,<br/>
+						please check out my book:
+						<br><br><a href="http://www.amazon.com/Health-Public-Confused-Concerned-Curious/dp/1479296031/ref=zg_bsnr_10771_17" target="_blank"><img src="img/cover.jpg" style="width:200px; height:246px"></img></a><br/><br/>
+						Available in <a href="http://www.amazon.com/Health-Public-Confused-Concerned-Curious/dp/1479296031/ref=zg_bsnr_10771_17" style="color:yellow" target="_blank">paperback</a> or <a href="http://www.amazon.com/Health-Confused-Concerned-Curious-ebook/dp/B009DTY492/ref=tmm_kin_title_0" style="color:yellow" target="_blank">Kindle edition</a>.
+						</center>
+					</div>
+				</div>
+		
+				<div class="dropshadow"><img src="img/carousel-dropshadow.png"></img></div>
+					<!-- Carousel nav -->
+					<a class="carousel-control left" href="#myCarousel" data-slide="prev">&lsaquo;</a>
+					<a class="carousel-control right" href="#myCarousel" data-slide="next">&rsaquo;</a>
+					
+				
+			</div>
+			<br/><br/>
+			<center>
+			<div style="font-family: Trebuchet MS, Lucida Sans Unicode, Arial, sans-serif; font-size:1.5em" class="carousel-linked-nav pagination">
+				<a href="#1" class="active">Start</a> * <a href="#2">Matching</a> * <a href="#3">Crossword Puzzle</a> * <a href="#4">True or False</a> * <a href="#5">Multiple Choice</a> * <a href="#6">Think it Out!</a> * <a href="#7" target="_blank">Learn More</a></</div>	
+			</center>
+			
+			
+			
+			
+			</center>
+			
+			
+<!--			<center>			
 				
 				<noformat>
 <table border="0" bordercolor="993300" >
@@ -67,7 +221,7 @@
 
 
 
-</table>                                                                                                                                                                                                                                       </noformat>
+</table>                                                                                                                                                                                                                                      </noformat>
 				
 				
 				
@@ -78,26 +232,46 @@
 				
 				
 				
-			</center>
+			</center>-->
 				
-				
+			
 				
 				
 				
 			
 		
-		</div>
+		<!--</div>-->
 		<br/><br/>
-		<center><div style="font-family: Trebuchet MS, Lucida Sans Unicode, Arial, sans-serif; font-size: 1.0em;">by Mark Robinson<br/>
+		<!--<center><div style="font-family: Trebuchet MS, Lucida Sans Unicode, Arial, sans-serif; font-size: 1.0em;">by Mark Robinson<br/>
 		author of <a href="http://www.amazon.com/Health-Public-Confused-Concerned-Curious/dp/1479296031/ref=zg_bsnr_10771_17" target="_blank" style="color:black"><i>Health Care and Public Policy for the Confused, Concerned, and Curious</i></a><br/>
 		<br/>
-		</div></center>
+		</div></center>-->
+		<!--<center>			
+				<iframe height="400" width="1010" src="matching2.html"></iframe>
+			</center>
+		<hr style="color: black; background-color:black; height:3px"/>
+		<center>			
+				<iframe height="420" width="1010" src="crossword2.html"></iframe>
+		</center>
+		<hr style="color: black; background-color:black; height:3px"/>
+		<center>			
+				<iframe height="800" width="1010" src="truefalse2.html"></iframe>
+			</center>
+		<hr style="color: black; background-color:black; height:3px"/>
+		<center>			
+				<iframe height="1000" width="1010" src="multiplechoice2.html"></iframe>
+			</center>
+		<hr style="color: black; background-color:black; height:3px"/>
+		<center>			
+				<iframe height="1200" width="1010" src="think2.html"></iframe>
+			</center>-->
+		
 		
 		
 		<iframe src="http://www.facebook.com/plugins/like.php?href=http%3A%2F%2Fwww.healthcareandpublicpolicy.com%2Fquiz.html&amp;send=false&amp;layout=standard&amp;width=450&amp;show_faces=true&amp;font=arial&amp;colorscheme=light&amp;action=like&amp;height=80" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:450px; height:80px;" allowTransparency="true"></iframe>
 		
 	
-		<p style="font-size:0.8em">Some images on this page from Wikimedia Commons (<a href="http://commons.wikimedia.org/wiki/File:Idea.png" target="_blank">here</a> and <a href="http://commons.wikimedia.org/wiki/File:Question_mark_3d.png" target="_blank">here</a>)</p>
+		<!--<p style="font-size:0.8em">Some images on this page from Wikimedia Commons (<a href="http://commons.wikimedia.org/wiki/File:Idea.png" target="_blank">here</a> and <a href="http://commons.wikimedia.org/wiki/File:Question_mark_3d.png" target="_blank">here</a>)</p>-->
 	</div>
 <div class="footer">
 		<div class="container">
