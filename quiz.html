@@ -49,7 +49,7 @@ $('#myCarousel').carousel({
 
 /* SLIDE ON CLICK */ 
 
-$('.carousel-linked-nav > a').click(function() {
+$('.carousel-linked-nav > span > a').click(function() {
 
     // grab href, remove pound sign, convert to number
     var item = Number($(this).attr('href').substring(1));
@@ -123,7 +123,7 @@ $('#myCarousel').bind('slid', function() {
 			<center>
 			<br/><br/>
 			<div style="font-family: Trebuchet MS, Lucida Sans Unicode, Arial, sans-serif; font-size:1.5em" class="carousel-linked-nav pagination">
-				<a href="#1" class="active">Start</a> * <a href="#2">Matching</a> * <a href="#3">Crossword Puzzle</a> * <a href="#4">True or False</a> * <a href="#5">Multiple Choice</a> * <a href="#6">Think it Out!</a> * <a href="#7" target="_blank">Learn More</a></</div>	
+				<span class="active"><a href="#1">Start</a></span> * <span><a href="#2">Matching</a></span> * <span><a href="#3">Crossword Puzzle</a></span> * <span><a href="#4">True or False</a></span> * <span><a href="#5">Multiple Choice</a></span> * <span><a href="#6">Think it Out!</a></span> * <span><a href="#7" target="_blank">Learn More</a></span></</div>	
 			</center>
 			
 			<div id="myCarousel" class="carousel slide" data-interval=90000>
@@ -192,7 +192,7 @@ $('#myCarousel').bind('slid', function() {
 			<br/><br/>
 			<center>
 			<div style="font-family: Trebuchet MS, Lucida Sans Unicode, Arial, sans-serif; font-size:1.5em" class="carousel-linked-nav pagination">
-				<a href="#1" class="active">Start</a> * <a href="#2">Matching</a> * <a href="#3">Crossword Puzzle</a> * <a href="#4">True or False</a> * <a href="#5">Multiple Choice</a> * <a href="#6">Think it Out!</a> * <a href="#7" target="_blank">Learn More</a></</div>	
+				<span class="active"><a href="#1">Start</a></span> * <span><a href="#2">Matching</a></span> * <span><a href="#3">Crossword Puzzle</a></span> * <span><a href="#4">True or False</a></span> * <span><a href="#5">Multiple Choice</a></span> * <span><a href="#6">Think it Out!</a></span> * <span><a href="#7" target="_blank">Learn More</a></span></</div>	
 			</center>
 			
 			
